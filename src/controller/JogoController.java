@@ -37,14 +37,44 @@ public class JogoController {
                 case 1 -> treinar();
                 case 2 -> lutar();
                 case 3 -> distribuirPontos();
+                case 4 -> visitarLoja();
                 case 0 -> jogando = false;
                 default -> Menu.mostrarMensagem("Opção inválida.");
             }
 
             if (jogando) {
                 Menu.mostrarMensagem("\n" + personagem.getStatus().toString());
+                Menu.mostrarMensagem("Arma: " + personagem.getArmaEquipada().getNome() +
+                        " | Ouro: " + personagem.getOuro());
                 Menu.mostrarMensagem("Nível: " + personagem.getLevel() + " | XP: " + personagem.getXp() + "/" + (personagem.getLevel() * 100));
             }
+        }
+    }
+
+    private void visitarLoja() {
+        Menu.mostrarMensagem("\n=== LOJA DO VELHO MERCADOR ===");
+        Menu.mostrarMensagem("Seu ouro: " + personagem.getOuro() + "\n");
+
+        Arma[] armas = Arma.values();
+        for (int i = 1; i < armas.length; i++) {  // pula NENHUMA
+            Arma a = armas[i];
+            System.out.printf("%d - %s | Dano base: %d | Preço: %d ouro\n",
+                    i, a.getNome(), a.getDanoBase(), a.getPreco());
+        }
+
+        System.out.print("\nEscolha o número da arma (0 para sair): ");
+        int escolha = Menu.lerIntValido(0, armas.length - 1);  // reuse o método
+
+        if (escolha == 0) return;
+
+        Arma escolhida = armas[escolha];
+        if (escolhida == Arma.NENHUMA) return;
+        if (personagem.getOuro() >= escolhida.getPreco()) {
+            personagem.gastarOuro(escolhida.getPreco());
+            personagem.equiparArma(escolhida);
+            Menu.mostrarMensagem("✅ " + escolhida.getNome() + " equipada com sucesso!");
+        } else {
+            Menu.mostrarMensagem("❌ Ouro insuficiente.");
         }
     }
 
@@ -63,20 +93,20 @@ public class JogoController {
 
         int proximoDanoExtra = 0;
         boolean defendendo = false;
-        boolean buffAtivo = false;
 
         while (personagem.estaVivo() && inimigo.estaVivo()) {
-            // Mostra status rápido
-            Menu.mostrarMensagem("\nSua vida: " + personagem.getVidaAtual() + "/" + personagem.getVidaMaxima() +
-                    " | Mana: " + personagem.getManaAtual() + "/" + personagem.getManaMax());
+            Menu.mostrarMensagem("\nVida: " + personagem.getVidaAtual() + "/" + personagem.getVidaMaxima() +
+                    " | Mana: " + personagem.getManaAtual() + "/" + personagem.getManaMax() +
+                    " | Arma: " + personagem.getArmaEquipada().getNome());
 
             int escolha = Menu.menuCombate();
 
             switch (escolha) {
                 case 1 -> { // ATACAR
-                    int dano = personagem.calcularDanoFisico() + proximoDanoExtra;
+                    int dano = personagem.calcularDanoAtaque() + proximoDanoExtra;
                     inimigo.receberDano(dano);
-                    Menu.mostrarMensagem("Você acertou por " + dano + " de dano!");
+                    Menu.mostrarMensagem("Você acertou com " + personagem.getArmaEquipada().getNome() +
+                            " por " + dano + " de dano!");
                     proximoDanoExtra = 0;
                 }
                 case 2 -> { // DEFENDER
@@ -113,7 +143,7 @@ public class JogoController {
 
             // === TURNO DO INIMIGO ===
             inimigo.tickEfeitos();
-
+            if (!inimigo.estaVivo()) break;
             int danoInimigo = inimigo.atacar();
             if (defendendo) {
                 danoInimigo = Math.max(1, danoInimigo - personagem.calcularDefesa());
@@ -125,6 +155,7 @@ public class JogoController {
 
         if (personagem.estaVivo()) {
             Menu.mostrarMensagem("✅ VITÓRIA! +150 XP");
+            personagem.ganharOuro(70 + random.nextInt(60));
             personagem.ganharXp(150);
             personagem.restaurarAposBatalha();
         } else {

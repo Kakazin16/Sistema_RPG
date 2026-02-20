@@ -40,13 +40,14 @@ public class Menu {
     public static int menuJogo() {
         System.out.println("\n=== O QUE DESEJA FAZER? ===");
         System.out.println("1 - Treinar (+50 XP)");
-        System.out.println("2 - Lutar (combate real)");
+        System.out.println("2 - Lutar");
         System.out.println("3 - Distribuir pontos");
+        System.out.println("4 - Visitar Loja");
         System.out.println("0 - Sair");
-        return lerIntValido(0, 3);
+        return lerIntValido(0, 4);
     }
 
-    private static int lerIntValido(int min, int max) {
+    public static int lerIntValido(int min, int max) {
         while (true) {
             try {
                 int valor = sc.nextInt();

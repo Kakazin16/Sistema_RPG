@@ -13,6 +13,8 @@ public class Personagem {
     private int vidaAtual;
     private int manaMax;
     private int manaAtual;
+    private int ouro = 50;                    // ouro inicial
+    private Arma armaEquipada;
 
     public Personagem(String nome, Classe classe) {
         this.nome = nome;
@@ -22,6 +24,18 @@ public class Personagem {
         this.vidaAtual = getVidaMaxima();
         this.manaMax = status.get(Atributo.MENTE) * 10;
         this.manaAtual = manaMax;
+        this.armaEquipada = Arma.NENHUMA;
+    }
+
+    private Arma definirArmaInicial(Classe c) {
+        return switch (c) {
+            case GUERREIRO, PALADINO, HEROI -> Arma.ESPADA_LONGA;
+            case ESPADACHIM -> Arma.KATANA;
+            case BANDIDO, PRISIONEIRO -> Arma.ADAGA;
+            case ERUDITO, OCULTISTA -> Arma.CAJADO;
+            case ARAUTO -> Arma.SELO;
+            default -> Arma.ESPADA_CURTA;
+        };
     }
 
     public void ganharXp(int valor) {
@@ -56,13 +70,21 @@ public class Personagem {
         return vidaAtual > 0;
     }
 
-    public int calcularDanoFisico() {
-        int base = (int) (status.get(Atributo.FORCA) * 1.8 + status.get(Atributo.DESTREZA) * 0.9);
-        if (Math.random() < status.get(Atributo.DESTREZA) / 40.0) {
-            Menu.mostrarMensagem("CRÍTICO FÍSICO!");
-            return base * 2;
+    public int calcularDanoAtaque() {
+        Arma arma = getArmaEquipada();
+
+        int base = arma.getDanoBase();
+        int atributo = status.get(arma.getScaling());
+
+        int dano = base + atributo * 2;
+
+        // crítico por destreza
+        if (Math.random() < status.get(Atributo.DESTREZA) / 50.0) {
+            Menu.mostrarMensagem("💥 CRÍTICO!");
+            dano *= 2;
         }
-        return base;
+
+        return dano;
     }
 
     public int calcularDefesa() {
@@ -82,14 +104,20 @@ public class Personagem {
     }
 
     public void restaurarAposBatalha() {
-        int cura = getVidaMaxima() * 100 / 100; // 100%
+        int cura = getVidaMaxima() * 50 / 100; // 50%
         vidaAtual = Math.min(getVidaMaxima(), vidaAtual + cura);
         restaurarManaCompleta();
     }
 
+    public void ganharOuro(int qtd) { ouro += qtd; }
+    public void gastarOuro(int qtd) { ouro -= qtd; }
+    public void equiparArma(Arma arma) { this.armaEquipada = arma; }
+
 
 
     // Getters
+    public Arma getArmaEquipada() { return armaEquipada; }
+    public int getOuro() { return ouro; }
     public int getLevel() { return level; }
     public int getXp() { return xp; }
     public Status getStatus() { return status; }
